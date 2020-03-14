@@ -8,33 +8,25 @@ import (
 	"strings"
 
 	"github.com/weibelben/finance_parser/pkg/transaction"
+	"github.com/weibelben/finance_parser/internal/csvReader"
 	log "github.com/sirupsen/logrus"
 )
+
+// citibank package implements provider interface
 
 // ParseStatements returns the parsed data of all citi statements
 func ParseStatements() (transaction.StatementType, error) {
 	statementFiles, err := findStatements()
 	if err != nil {
 		log.WithError(err).Fatal("Failed to collect citibank statements.")
-		return nil, err
-	} 
+		return statementFiles, err
+	}
 
-	var statementData [][]string
 	for _, file := range statementFiles {
-		statementData, err = readCSV(file)
-	}
-	return nil, nil
-}
-
-func readCSV(filePath string) ([][]string, error){
-	var r io.Reader
-	r, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
+		statementData, err := csvReader.ReadCSV(file)
 	}
 
-	csvReader := csv.NewReader(r)
-	return csvReader.ReadAll()
+	return statementFiles, nil
 }
 
 // findStatements returns the names of all the csv files in the
@@ -45,7 +37,7 @@ func findStatements() ([]string, error) {
 		return nil, err
 	}
 
-	citiDir := root + "/citibank_statements"
+	citiDir := root + "statements/citibank_statements"
 
 	files, err := ioutil.ReadDir(citiDir)
 	if err != nil {

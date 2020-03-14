@@ -6,20 +6,14 @@ import (
 	"github.com/weibelben/finance_parser/pkg/transaction"
 )
 
-// citibank package implements provider interface
-func parseCitiStatements() transaction.StatementType {
-	log.Info("Your citibank data is being compiled...")
-
-	statement := transaction.Statement("citi", nil)
-	return statement
-}
-
-func main() {
-	log.Info("Your citibank data is being compiled...")
-	statements, err  := citibank.FindStatements()
+// parseCitiStatements returns an []Statement type containing all of the
+// citibank statement data present in /statements/citibank/
+func parseCitiStatements() (transaction.StatementType, error) {
+	log.Info("Your citibank data is being parsed...")
+	statements, err  := citibank.ParseStatements()
 	if err != nil {
-		log.WithError(err).Fatal("Failed to collect citibank statements.")
+		return statements, err
 	}
 
-	log.Info(statements)
+	return statements, nil
 }
