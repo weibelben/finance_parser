@@ -15,42 +15,29 @@ import (
 // citibank package implements provider interface
 
 // ParseStatements returns the parsed data of all citi statements
-func ParseStatements() (transaction.StatementType, error) {
-	statementFiles, err := findStatements()
+func ParseStatements() ([]transaction.StatementType, error) {
+	statementFiles, err := findStatements("citibank_statements")
 	if err != nil {
-		log.WithError(err).Fatal("Failed to collect citibank statements.")
-		return statementFiles, err
+		return nil, err
+		)
 	}
+
+	var combinedStatementData []transaction.StatementType
+	statementData.provider := "citibank"
 
 	for _, file := range statementFiles {
 		statementData, err := csvReader.ReadCSV(file)
-	}
-
-	return statementFiles, nil
-}
-
-// findStatements returns the names of all the csv files in the
-// citibank/ dir
-func findStatements() ([]string, error) {
-	root, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
-	citiDir := root + "statements/citibank_statements"
-
-	files, err := ioutil.ReadDir(citiDir)
-	if err != nil {
-		return nil, err
-	}
-
-	var statements []string
-	for _, file := range files {
-		// only include csv files
-		if strings.HasSuffix(file.Name(), ".csv") {
-			statements = append(statements, file.Name())
+		if err != nil {
+			return combinedStatementData, err
 		}
+
+		combinedStatementData = append(combinedStatementData, statementData)
 	}
-	
-	return statements, nil
+
+	parsedStatementData, err := parseRawData(combinedStatementData)
+	if err != nil {
+		return parsedStatementData, err
+	}
+
+	return combinedStatementData, nil
 }
