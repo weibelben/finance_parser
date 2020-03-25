@@ -8,57 +8,60 @@ import (
 	"strings"
 
 	"github.com/weibelben/finance_parser/pkg/transaction"
+	"github.com/weibelben/finance_parser/internal/csvReader"
 	log "github.com/sirupsen/logrus"
 )
 
-// ParseStatements returns the parsed data of all citi statements
-func ParseStatements() (transaction.StatementType, error) {
-	statementFiles, err := findStatements()
-	if err != nil {
-		log.WithError(err).Fatal("Failed to collect citibank statements.")
-		return nil, err
-	} 
+// citibank package implements provider interface
 
-	var statementData [][]string
-	for _, file := range statementFiles {
-		statementData, err = readCSV(file)
+// ParseStatements returns the parsed data of all citi statements
+func ParseStatements() ([]transaction.StatementType, error) {
+	statementFiles, err := findStatements("citibank_statements")
+	if err != nil {
+		return nil, err
 	}
+
+	return parseStatements(statementFiles)
+}
+
+// ParseRawStatementData is inherited from the provider interface.
+func ParseRawStatementData([][]string rawStatementData) (transaction.StatementType, error) {
+	var statementData transaction.StatementType
+	statementData.provider := "citibank"
+	
+	var records []statement.RecordType
+	for i, row := range rawStatementData {
+		// skip first row as it only contains headers
+		if i == 0 {
+			continue
+		}
+
+		// each row is a record
+		record, err := parseStatementEntry(row)
+		if err != nil {
+			return statementData, err
+		}
+
+		records := append(records, record)
+	}
+
+	statementData.records := records
+
 	return nil, nil
 }
 
-func readCSV(filePath string) ([][]string, error){
-	var r io.Reader
-	r, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
+// parseStatementEntry is inherited from the provider interface.
+// Citibank statements are of the form:
+// date, description, amount
+func parseStatementEntry([]string row) (transaction.RecordType, error) {
+	var record transaction.RecordType
+	if len(row) != 5 { // fixme idk how long an entry is
+		return record, Errors.New("unexpected length of citibank statement entry") // FIXME create an error type for this
 	}
 
-	csvReader := csv.NewReader(r)
-	return csvReader.ReadAll()
-}
+	record.date := row[0]
+	record.amount := row[2]
+	record.description := row[1]
 
-// findStatements returns the names of all the csv files in the
-// citibank/ dir
-func findStatements() ([]string, error) {
-	root, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
-	citiDir := root + "/citibank_statements"
-
-	files, err := ioutil.ReadDir(citiDir)
-	if err != nil {
-		return nil, err
-	}
-
-	var statements []string
-	for _, file := range files {
-		// only include csv files
-		if strings.HasSuffix(file.Name(), ".csv") {
-			statements = append(statements, file.Name())
-		}
-	}
-	
-	return statements, nil
+	return record
 }

@@ -1,24 +1,16 @@
 package transaction
 
-// StatementType is a struct
-type StatementType struct {
-	provider string // fixme enum
-	records []RecordType
-}
+import (
+	"fmt"
+
+	log "github.com/sirupsen/logrus"
+)
 
 // RecordType is a struct
 type RecordType struct {
 	date string
 	amount int
 	description string
-}
-
-// Statement returns a new StatementType struct
-func Statement(provider string, records []RecordType) StatementType {
-	return StatementType{
-		provider: provider,
-		records: records,
-	}
 }
 
 // Record returns a new RecordType struct
@@ -28,4 +20,18 @@ func Record(date string, amount int, description string) RecordType {
 		amount: amount,
 		description: description,
 	}
+}
+
+func (r *RecordType) Classify() {
+	// FIXME TODO
+}
+
+// Print prints the underlying data of a Record
+func (r *RecordType) Print() {
+	log.Info(fmt.Sprintf(
+		"\tDate: %s  Amount: %d  Description %s",
+		r.date,
+		r.amount,
+		r.description,
+	))
 }
