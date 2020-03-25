@@ -9,7 +9,7 @@ import (
 
 // StatementType is a struct
 type StatementType struct {
-	Provider string // fixme enum
+	Provider string // fixme enum type
 	Records []RecordType
 }
 
