@@ -1,35 +1,33 @@
 package citibank
 
 import (
-	"io"
-	"io/ioutil"
-	"encoding/csv"
-	"os"
-	"strings"
+	"errors"
 
+	"github.com/weibelben/finance_parser/pkg/provider"
 	"github.com/weibelben/finance_parser/pkg/transaction"
-	"github.com/weibelben/finance_parser/internal/csvReader"
 	log "github.com/sirupsen/logrus"
 )
 
 // citibank package implements provider interface
 
 // ParseStatements returns the parsed data of all citi statements
-func ParseStatements() ([]transaction.StatementType, error) {
-	statementFiles, err := findStatements("citibank_statements")
+func ParseStatementFiles() ([]transaction.StatementType, error) {
+	var citiProvider provider.Provider
+	statementFiles, err := provider.FindStatements("citibank_statements")
 	if err != nil {
 		return nil, err
 	}
 
-	return parseStatements(statementFiles)
+	return provider.ParseStatements(citiProvider, statementFiles)
 }
 
 // ParseRawStatementData is inherited from the provider interface.
-func ParseRawStatementData([][]string rawStatementData) (transaction.StatementType, error) {
+func ParseRawStatementData(rawStatementData [][]string) (transaction.StatementType, error) {
+	log.Info("parsing statement")
 	var statementData transaction.StatementType
-	statementData.provider := "citibank"
+	statementData.Provider = "citibank"
 	
-	var records []statement.RecordType
+	var records []transaction.RecordType
 	for i, row := range rawStatementData {
 		// skip first row as it only contains headers
 		if i == 0 {
@@ -42,26 +40,22 @@ func ParseRawStatementData([][]string rawStatementData) (transaction.StatementTy
 			return statementData, err
 		}
 
-		records := append(records, record)
+		records = append(records, record)
 	}
 
-	statementData.records := records
+	statementData.Records = records
 
-	return nil, nil
+	return statementData, nil
 }
 
 // parseStatementEntry is inherited from the provider interface.
 // Citibank statements are of the form:
 // date, description, amount
-func parseStatementEntry([]string row) (transaction.RecordType, error) {
+func parseStatementEntry(row []string) (transaction.RecordType, error) {
 	var record transaction.RecordType
 	if len(row) != 5 { // fixme idk how long an entry is
-		return record, Errors.New("unexpected length of citibank statement entry") // FIXME create an error type for this
+		return record, errors.New("unexpected length of citibank statement entry") // FIXME create an error type for this
 	}
 
-	record.date := row[0]
-	record.amount := row[2]
-	record.description := row[1]
-
-	return record
+	return transaction.Record(row[0], row[2], row[1])
 }
