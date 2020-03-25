@@ -8,6 +8,8 @@ import (
 // by each finance service provider
 type Provider interface {
 	ParseStatements([]transaction.StatementType, error) ()
+	ParseRawStatementData([][]string statementData) (transaction.StatementType, error)
+	parseStatementEntry([]string row) (transaction.RecordType, error)
 }
 
 // findStatements returns the names of all the csv files in the
@@ -36,4 +38,26 @@ func findStatements(folder string) ([]string, error) {
 	}
 	
 	return statements, nil
+}
+
+// parseStatements returns a slice of statements
+func parseStatements(statementFiles []string) ([]transaction.StatementType, error) {
+	var combinedStatementData []transaction.StatementType
+
+	// read and parse each statement
+	for _, file := range statementFiles {
+		rawStatementData, err := csvReader.ReadCSV(file)
+		if err != nil {
+			return nil, err
+		}
+
+		parsedStatementData, err := parseRawCitiStatement(rawStatementData)
+		if err != nil {
+			return nil, err
+		}
+
+		combinedStatementData = append(combinedStatementData, rawStatementData)
+	}
+
+	return combinedStatementData, nil
 }

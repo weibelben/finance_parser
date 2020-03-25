@@ -19,25 +19,49 @@ func ParseStatements() ([]transaction.StatementType, error) {
 	statementFiles, err := findStatements("citibank_statements")
 	if err != nil {
 		return nil, err
-		)
 	}
 
-	var combinedStatementData []transaction.StatementType
-	statementData.provider := "citibank"
+	return parseStatements(statementFiles)
+}
 
-	for _, file := range statementFiles {
-		statementData, err := csvReader.ReadCSV(file)
-		if err != nil {
-			return combinedStatementData, err
+// ParseRawStatementData is inherited from the provider interface.
+func ParseRawStatementData([][]string rawStatementData) (transaction.StatementType, error) {
+	var statementData transaction.StatementType
+	statementData.provider := "citibank"
+	
+	var records []statement.RecordType
+	for i, row := range rawStatementData {
+		// skip first row as it only contains headers
+		if i == 0 {
+			continue
 		}
 
-		combinedStatementData = append(combinedStatementData, statementData)
+		// each row is a record
+		record, err := parseStatementEntry(row)
+		if err != nil {
+			return statementData, err
+		}
+
+		records := append(records, record)
 	}
 
-	parsedStatementData, err := parseRawData(combinedStatementData)
-	if err != nil {
-		return parsedStatementData, err
+	statementData.records := records
+
+	return nil, nil
+}
+
+// parseStatementEntry is inherited from the provider interface.
+// Citibank statements are of the form:
+// date, description, amount
+func parseStatementEntry([]string row) (transaction.RecordType, error) {
+	var record transaction.RecordType
+	if len(row) != 5 { // fixme idk how long an entry is
+		return record, Errors.New("unexpected length of citibank statement entry") // FIXME create an error type for this
 	}
 
-	return combinedStatementData, nil
+	record.date := row[0]
+	record.amount := row[2]
+	record.description := row[1]
+
+	return record
 }
