@@ -7,12 +7,23 @@ import (
 )
 
 func main() {
-	statements := parseStatements()
+	_, err := parseStatements()
+	if err != nil {
+		log.WithError(err).Error("failed to parse statements")
+	}
 }
 
-func parseStatements() {
-	citiStatements, err := parseCitiStatements()
+// parseStatments is the default, parse all function
+func parseStatements() ([][]transaction.StatementType, error) {
+	var aggregatedStatements [][]transaction.StatementType
+
+	citiStatements, err := citibank.ParseStatementFiles()
 	if err != nil {
-		log.WithError(err).Error("unable to parse Citibank statements")
+		log.Error("unable to parse Citibank statements")
+		return aggregatedStatements, err
 	}
+
+	aggregatedStatements = append(aggregatedStatements, citiStatements)
+
+	return aggregatedStatements, nil
 }
