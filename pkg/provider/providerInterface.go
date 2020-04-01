@@ -19,6 +19,15 @@ type Provider interface {
 	parseStatementEntry([]string) (transaction.RecordType, error)
 }
 
+// StatementSyntaxError is raised when an input csv statement has bad syntax
+type StatementSyntaxError struct {
+    Message string
+}
+
+func (e *StatementSyntaxError) Error() string {
+    return fmt.Sprintf("statement syntax error: %s", e.Message)
+}
+
 // FindStatements returns the names of all the csv files in the
 // citibank/ dir
 func FindStatements(folder string) ([]string, error) {
