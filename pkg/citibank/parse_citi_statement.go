@@ -1,8 +1,6 @@
 package citibank
 
 import (
-	"errors"
-
 	"github.com/weibelben/finance_parser/pkg/provider"
 	"github.com/weibelben/finance_parser/pkg/transaction"
 	log "github.com/sirupsen/logrus"
@@ -10,7 +8,7 @@ import (
 
 // citibank package implements provider interface
 
-// ParseStatements returns the parsed data of all citi statements
+// ParseStatementFiles returns the parsed data of all citi statements
 func ParseStatementFiles() ([]transaction.StatementType, error) {
 	var citiProvider provider.Provider
 	statementFiles, err := provider.FindStatements("citibank_statements")
@@ -50,12 +48,22 @@ func ParseRawStatementData(rawStatementData [][]string) (transaction.StatementTy
 
 // parseStatementEntry is inherited from the provider interface.
 // Citibank statements are of the form:
-// date, description, amount
+// status, date, description, debit amount, credit amount
 func parseStatementEntry(row []string) (transaction.RecordType, error) {
 	var record transaction.RecordType
-	if len(row) != 5 { // fixme idk how long an entry is
-		return record, errors.New("unexpected length of citibank statement entry") // FIXME create an error type for this
+	if len(row) != 5 {
+		return record, &provider.StatementSyntaxError{
+			Message: "unexpected length of citibank statement entry",
+		}
 	}
 
-	return transaction.Record(row[0], row[2], row[1])
+	if row[4] != "" {
+		if row[3] == "" {
+			return record, &provider.StatementSyntaxError{
+				Message: "credit charge instead of debit",
+			}
+		}
+ 	}
+
+	return transaction.Record(row[1], row[3], row[2])
 }
