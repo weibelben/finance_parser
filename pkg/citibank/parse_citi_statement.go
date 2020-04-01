@@ -6,8 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// citibank package implements provider interface
-
 // ParseStatementFiles returns the parsed data of all citi statements
 func ParseStatementFiles() ([]transaction.StatementType, error) {
 	var citiProvider provider.Provider
@@ -57,6 +55,7 @@ func parseStatementEntry(row []string) (transaction.RecordType, error) {
 		}
 	}
 
+	// Ensure all charges are debit charges
 	if row[4] != "" {
 		if row[3] == "" {
 			return record, &provider.StatementSyntaxError{

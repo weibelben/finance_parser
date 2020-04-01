@@ -7,9 +7,15 @@ import (
 )
 
 func main() {
-	_, err := parseStatements()
+	statements, err := parseStatements()
 	if err != nil {
 		log.WithError(err).Error("failed to parse statements")
+	}
+
+	for _, list := range statements {
+		for _, statement := range list {
+			statement.Print()
+		}
 	}
 }
 

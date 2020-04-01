@@ -38,7 +38,7 @@ func FindStatements(folder string) ([]string, error) {
 	}
 
 	rootFolder := "finance_parser/"
-	root = strings.Split(root, rootFolder)[0] + rootFolder
+	root = strings.Split(root, rootFolder)[0] + "/"
 
 	log.Info(root)
 	// read all file names in working dir
@@ -53,15 +53,16 @@ func FindStatements(folder string) ([]string, error) {
 	for _, file := range files {
 		// only include csv files
 		if strings.HasSuffix(file.Name(), ".csv") {
-			statements = append(statements, file.Name())
+			filePath := root + "statements/" + folder + "/" + file.Name()
+			statements = append(statements, filePath)
 		}
 	}
-	
+
 	return statements, nil
 }
 
 // ParseStatements returns a slice of statements
-func ParseStatements(provider Provider, statementFiles []string) ([]transaction.StatementType, error) {
+func ParseStatements(statementFiles []string) ([]transaction.StatementType, error) {
 	combinedStatementData := []transaction.StatementType{}
 
 	// read and parse each statement
@@ -71,7 +72,7 @@ func ParseStatements(provider Provider, statementFiles []string) ([]transaction.
 			return nil, err
 		}
 
-		parsedStatementData, err := provider.ParseRawStatementData(rawStatementData)
+		parsedStatementData, err := prov.ParseRawStatementData(rawStatementData)
 		if err != nil {
 			return nil, err
 		}
