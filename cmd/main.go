@@ -7,13 +7,19 @@ import (
 )
 
 func main() {
-	_, err := parseStatements()
+	statements, err := parseStatements()
 	if err != nil {
 		log.WithError(err).Error("failed to parse statements")
 	}
+
+	for _, list := range statements {
+		for _, statement := range list {
+			statement.Print()
+		}
+	}
 }
 
-// parseStatments is the default, parse all function
+// parseStatments is the default, parse-all-providers function
 func parseStatements() ([][]transaction.StatementType, error) {
 	var aggregatedStatements [][]transaction.StatementType
 

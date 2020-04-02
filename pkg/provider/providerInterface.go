@@ -6,8 +6,6 @@ import (
 	"os"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/weibelben/finance_parser/internal/csvReader"
 	"github.com/weibelben/finance_parser/pkg/transaction"
 )
 
@@ -15,7 +13,8 @@ import (
 // by each finance service provider
 type Provider interface {
 	ParseStatementFiles([]transaction.StatementType, error) ()
-	ParseRawStatementData([][]string) (transaction.StatementType, error)
+	parseStatements(statementFiles []string) ([]transaction.StatementType, error)
+	parseRawStatementData([][]string) (transaction.StatementType, error)
 	parseStatementEntry([]string) (transaction.RecordType, error)
 }
 
@@ -37,10 +36,9 @@ func FindStatements(folder string) ([]string, error) {
 		return nil, err
 	}
 
-	rootFolder := "finance_parser/"
-	root = strings.Split(root, rootFolder)[0] + rootFolder
+	rootFolder := "finance_parser"
+	root = strings.Split(root, rootFolder)[0] + rootFolder + "/"
 
-	log.Info(root)
 	// read all file names in working dir
 	citiDir := root + fmt.Sprintf("statements/%s", folder)
 	files, err := ioutil.ReadDir(citiDir)
@@ -53,31 +51,10 @@ func FindStatements(folder string) ([]string, error) {
 	for _, file := range files {
 		// only include csv files
 		if strings.HasSuffix(file.Name(), ".csv") {
-			statements = append(statements, file.Name())
+			filePath := root + "statements/" + folder + "/" + file.Name()
+			statements = append(statements, filePath)
 		}
 	}
-	
+
 	return statements, nil
-}
-
-// ParseStatements returns a slice of statements
-func ParseStatements(provider Provider, statementFiles []string) ([]transaction.StatementType, error) {
-	combinedStatementData := []transaction.StatementType{}
-
-	// read and parse each statement
-	for _, file := range statementFiles {
-		rawStatementData, err := csvReader.ReadCSV(file)
-		if err != nil {
-			return nil, err
-		}
-
-		parsedStatementData, err := provider.ParseRawStatementData(rawStatementData)
-		if err != nil {
-			return nil, err
-		}
-
-		combinedStatementData = append(combinedStatementData, parsedStatementData)
-	}
-
-	return combinedStatementData, nil
 }

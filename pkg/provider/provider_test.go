@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/weibelben/finance_parser/pkg/transaction"
 )
 
 // Not actual unit tests, relies on underlying file system
@@ -32,13 +31,19 @@ func TestFindStatements(t *testing.T) {
 			name:     "populatedFolder",
 			folder:   "test_statements/populatedtestfolder",
 			err:	  "",
-			expected: []string{"statement1.csv", "statement2.csv"},
+			expected: []string{
+				"/home/benw/parsers/finance_parser/statements/test_statements/populatedtestfolder/statement1.csv",
+				"/home/benw/parsers/finance_parser/statements/test_statements/populatedtestfolder/statement2.csv",
+			},
 		},
 		{
 			name:     "populatedFolderWithNoise",
 			folder:   "test_statements/noisytestfolder",
 			err:	  "",
-			expected: []string{"statement1.csv", "statement2.csv"},
+			expected: []string{
+				"/home/benw/parsers/finance_parser/statements/test_statements/noisytestfolder/statement1.csv",
+				"/home/benw/parsers/finance_parser/statements/test_statements/noisytestfolder/statement2.csv",
+			},
 		},
 	}
 
@@ -55,41 +60,6 @@ func TestFindStatements(t *testing.T) {
 				}
 			} else {
 				assert.Equal(t, folderNames, testcase.expected, "unexected folder names")
-			}
-		})
-	}
-}
-
-func TestParseStatements(t *testing.T) {
-	cases := []struct {
-		name     string
-		files    []string
-		err      string
-		expected []transaction.StatementType
-	}{
-		{
-			name:    "noFiles",
-			files:   []string{},
-			err:	  "",
-			expected: []transaction.StatementType{},
-		},
-	}
-
-	var prov Provider
-
-	for _, testcase := range cases {
-		t.Run(testcase.name, func(t *testing.T) {
-			statements, err := ParseStatements(prov, testcase.files)
-			if err != nil {
-				if testcase.err == "" {
-					t.Errorf("test %s failed: %s", testcase.name, err)
-				}
-
-				if !strings.Contains(err.Error(), testcase.err) {
-					t.Errorf("test %s failed: %s", testcase.name, err)
-				}
-			} else {
-				assert.Equal(t, statements, testcase.expected, "unexected statements")
 			}
 		})
 	}
