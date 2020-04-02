@@ -19,7 +19,7 @@ func main() {
 	}
 }
 
-// parseStatments is the default, parse all function
+// parseStatments is the default, parse-all-providers function
 func parseStatements() ([][]transaction.StatementType, error) {
 	var aggregatedStatements [][]transaction.StatementType
 

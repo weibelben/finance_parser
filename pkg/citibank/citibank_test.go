@@ -9,6 +9,39 @@ import (
 	"github.com/weibelben/finance_parser/pkg/transaction"
 )
 
+func TestParseStatements(t *testing.T) {
+	cases := []struct {
+		name     string
+		files    []string
+		err      string
+		expected []transaction.StatementType
+	}{
+		{
+			name:    "noFiles",
+			files:   []string{},
+			err:	  "",
+			expected: []transaction.StatementType{},
+		},
+	}
+
+	for _, testcase := range cases {
+		t.Run(testcase.name, func(t *testing.T) {
+			statements, err := parseStatements(testcase.files)
+			if err != nil {
+				if testcase.err == "" {
+					t.Errorf("test %s failed: %s", testcase.name, err)
+				}
+
+				if !strings.Contains(err.Error(), testcase.err) {
+					t.Errorf("test %s failed: %s", testcase.name, err)
+				}
+			} else {
+				assert.Equal(t, statements, testcase.expected, "unexected statements")
+			}
+		})
+	}
+}
+
 func TestParseStatementEntry(t *testing.T) {
 	cases := []struct {
 		name     string

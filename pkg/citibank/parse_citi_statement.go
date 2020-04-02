@@ -1,6 +1,9 @@
 package citibank
 
 import (
+	"fmt"
+
+	"github.com/weibelben/finance_parser/internal/csvReader"
 	"github.com/weibelben/finance_parser/pkg/provider"
 	"github.com/weibelben/finance_parser/pkg/transaction"
 	log "github.com/sirupsen/logrus"
@@ -8,17 +11,38 @@ import (
 
 // ParseStatementFiles returns the parsed data of all citi statements
 func ParseStatementFiles() ([]transaction.StatementType, error) {
-	var citiProvider provider.Provider
 	statementFiles, err := provider.FindStatements("citibank_statements")
 	if err != nil {
 		return nil, err
 	}
 
-	return provider.ParseStatements(citiProvider, statementFiles)
+	return parseStatements(statementFiles)
 }
 
-// ParseRawStatementData is inherited from the provider interface.
-func ParseRawStatementData(rawStatementData [][]string) (transaction.StatementType, error) {
+// parseStatements returns a slice of statements
+func parseStatements(statementFiles []string) ([]transaction.StatementType, error) {
+	combinedStatementData := []transaction.StatementType{}
+
+	// read and parse each statement
+	for _, file := range statementFiles {
+		rawStatementData, err := csvReader.ReadCSV(file)
+		if err != nil {
+			return nil, err
+		}
+
+		parsedStatementData, err := parseRawStatementData(rawStatementData)
+		if err != nil {
+			return nil, err
+		}
+
+		combinedStatementData = append(combinedStatementData, parsedStatementData)
+	}
+
+	return combinedStatementData, nil
+}
+
+// parseRawStatementData is inherited from the provider interface.
+func parseRawStatementData(rawStatementData [][]string) (transaction.StatementType, error) {
 	log.Info("parsing statement")
 	var statementData transaction.StatementType
 	statementData.Provider = "citibank"
@@ -56,13 +80,19 @@ func parseStatementEntry(row []string) (transaction.RecordType, error) {
 	}
 
 	// Ensure all charges are debit charges
+	amountStr := row[3]
 	if row[4] != "" {
-		if row[3] == "" {
+		if row[3] != "" {
 			return record, &provider.StatementSyntaxError{
-				Message: "credit charge instead of debit",
+				Message: fmt.Sprintf(
+					"both debit and credit amounts present: %s, %s",
+					row[3],
+					row[4],
+				),
 			}
-		}
+		} 
+		amountStr = row[4]
  	}
 
-	return transaction.Record(row[1], row[3], row[2])
+	return transaction.Record(row[1], amountStr, row[2])
 }
